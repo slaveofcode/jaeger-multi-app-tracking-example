@@ -23,13 +23,13 @@ const fn = (req, res, next) => {
     span.setTag('http.full_url', req.protocol + '://' + req.get('host') + req.originalUrl)
 
     // prepare response headers for debugging slow response on the browser using trace ID
-    const injectedHeaders = {}
-    tracer.inject(span, openTracing.FORMAT_HTTP_HEADERS, injectedHeaders)
-    res.set(injectedHeaders)
+    const resHeaders = {}
+    tracer.inject(span, openTracing.FORMAT_HTTP_HEADERS, resHeaders)
+    res.set(resHeaders)
 
     // add span to the req object
     // to be used by another middleware/api handler
-    Object.assign(req, { tracer: { span, injectedHeaders } })
+    Object.assign(req, { tracer: { span } })
 
     const finishSpan = () => {
         if (res.statusCode >= 300) {

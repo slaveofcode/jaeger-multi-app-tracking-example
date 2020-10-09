@@ -1,5 +1,5 @@
 {
-  "name": "api-a",
+  "name": "api-b",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -10,7 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.20.0",
+    "body-parser": "^1.19.0",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "jaeger-client": "^3.18.1"
