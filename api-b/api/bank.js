@@ -28,6 +28,11 @@ router.get('/:id', (req, res) => {
         event: 'format',
         message: 'getting specific bank account from user id:' + req.params.id
     })
+
+    if (acc) {
+        span.setBaggageItem("user_id", acc.userId)
+    }
+    
     return res.json(acc)
 })
 
