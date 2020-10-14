@@ -32,7 +32,7 @@ const fn = (req, res, next) => {
     Object.assign(req, { tracer: { span, injectedHeaders } })
 
     const finishSpan = () => {
-        if (res.statusCode >= 300) {
+        if (res.statusCode >= 400) {
             // collecting errors & making tags for that
             span.setTag(openTracing.Tags.SAMPLING_PRIORITY, 1)
             span.setTag(openTracing.Tags.ERROR, true)

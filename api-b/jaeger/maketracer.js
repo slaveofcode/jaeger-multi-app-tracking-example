@@ -1,3 +1,5 @@
+const { initTracerFromEnv } = require('jaeger-client')
+
 const tracerConf = {
     sampler: {
         type: 'const',
@@ -8,9 +10,9 @@ const tracerConf = {
 const tracerOpts = {}
 
 const fromEnv = (cfg = {}, opts = {}) => {
-    const initTracer = require('jaeger-client').initTracerFromEnv
+    const { initTracerFromEnv } = require('jaeger-client')
 
-    return initTracer({
+    return initTracerFromEnv({
         ...tracerConf,
         ...cfg,
     }, {
@@ -19,6 +21,34 @@ const fromEnv = (cfg = {}, opts = {}) => {
     })
 }
 
+const fromDefault = () => {
+    const { initTracer } = require('jaeger-client')
+
+    const config = {
+        serviceName: 'Service B',
+        sampler: {
+            type: "const",
+            param: 1,
+        },
+        reporter: {
+            logSpans: true,
+        },
+    };
+    const options = {
+        logger: {
+            info: function logInfo(msg) {
+                console.log("INFO ", msg);
+            },
+            error: function logError(msg) {
+                console.log("ERROR", msg);
+            },
+        },
+    };
+
+    return initTracer(config, options)
+}
+
 module.exports = {
     fromEnv,
+    fromDefault,
 }

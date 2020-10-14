@@ -13,6 +13,7 @@ import (
 	"github.com/rs/cors"
 	"github.com/slaveofcode/jaeger-multi-app-tracking-example/pinger"
 	"github.com/slaveofcode/jaeger-multi-app-tracking-example/service"
+	"github.com/uber/jaeger-client-go"
 	jaegerConf "github.com/uber/jaeger-client-go/config"
 )
 
@@ -24,13 +25,24 @@ func init() {
 		log.Fatal("Error loading .env file")
 	}
 
-	cfg, err := jaegerConf.FromEnv()
+	// cfg, err := jaegerConf.FromEnv() // if config wants to load from env
+
+	cfg := &jaegerConf.Configuration{
+		ServiceName: "Service C",
+		Sampler: &jaegerConf.SamplerConfig{
+			Type:  "const",
+			Param: 1,
+		},
+		Reporter: &jaegerConf.ReporterConfig{
+			LogSpans: true,
+		},
+	}
 
 	if err != nil {
 		log.Fatalln("Unable to parse jaeger from ENV", err.Error())
 	}
 
-	tracer, closer, err := cfg.NewTracer()
+	tracer, closer, err := cfg.NewTracer(jaegerConf.Logger(jaeger.StdLogger))
 
 	if err != nil {
 		log.Fatalln("Unable to initialize tracer", err.Error())

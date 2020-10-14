@@ -1,5 +1,6 @@
 const router = require('express').Router()
 const opentracing = require('opentracing')
+const { logging } = require('./utils')
 
 const tracer = opentracing.globalTracer()
 
@@ -22,7 +23,10 @@ const bankAccounts = [
 ]
 
 router.get('/:id', (req, res) => {
-    const span = tracer.startSpan('detail-bank-account', { childOf: req.span })
+    const span = tracer.startSpan('detail-bank-account', { childOf: req.tracer.span })
+    logging('detail-bank-account', span)
+        .catch(err => {})
+    
     const acc = bankAccounts.find(u => u.userId === Number(req.params.id))
     span.log({
         event: 'format',
@@ -37,7 +41,10 @@ router.get('/:id', (req, res) => {
 })
 
 router.get('/', (req, res) => {
-    const span = tracer.startSpan('list-bank-accounts', { childOf: req.span })
+    const span = tracer.startSpan('list-bank-accounts', { childOf: req.tracer.span })
+    logging('list-bank-account', span)
+        .catch(err => {})
+
     span.log({
         event: 'format',
         message: 'getting all accounts'

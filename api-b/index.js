@@ -2,7 +2,7 @@ require('dotenv').config()
 
 const express = require('express')
 const bodyParser = require('body-parser')
-const { fromEnv } = require('./jaeger/maketracer')
+const { fromDefault } = require('./jaeger/maketracer')
 const traceMiddleware = require('./jaeger/middleware')
 const openTracing = require('opentracing')
 
@@ -13,7 +13,7 @@ app.use(bodyParser.urlencoded({ extended: false }))
 // parse application/json
 app.use(bodyParser.json())
 
-const tracer = fromEnv()
+const tracer = fromDefault()
 
 // set global tracer
 openTracing.initGlobalTracer(tracer)

@@ -1,6 +1,6 @@
 const router = require('express').Router()
 
 router.use('/bank-accounts', require('./bank'))
-router.use('/logging/access', require('./accesslog'))
+router.use('/reward/points', require('./point-reward'))
 
 module.exports = router

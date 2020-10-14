@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 
 	opentracing "github.com/opentracing/opentracing-go"
 )
@@ -13,15 +14,20 @@ func Ping() http.HandlerFunc {
 		wireContext, err := opentracing.GlobalTracer().Extract(
 			opentracing.HTTPHeaders,
 			opentracing.HTTPHeadersCarrier(r.Header))
+
+		var span opentracing.Span
 		if err != nil {
-			log.Println("Error while getting previous context", err.Error())
+			log.Println("No previous context:", err.Error())
+			span = opentracing.StartSpan(
+				"Pinger",
+				opentracing.ChildOf(wireContext))
+		} else {
+			span = opentracing.StartSpan(
+				"Pinger",
+			)
 		}
 
-		sp := opentracing.StartSpan(
-			"Pinger",
-			opentracing.ChildOf(wireContext))
-
-		defer sp.Finish()
+		defer span.Finish()
 
 		clientHeaders := make(map[string]interface{})
 
@@ -36,6 +42,12 @@ func Ping() http.HandlerFunc {
 		}
 
 		jsonHeaders, _ := json.Marshal(clientHeaders)
+
+		if strings.Contains(clientHeaders["User-Agent"].(string), "axios") {
+			span.SetTag("client-type", "service")
+		} else {
+			span.SetTag("client-type", "browser")
+		}
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(200)
