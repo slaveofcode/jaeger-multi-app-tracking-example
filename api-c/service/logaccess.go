@@ -32,7 +32,7 @@ func writeToDB(data string) {
 	time.Sleep(time.Millisecond * time.Duration(rand.Intn(5000-100)+100))
 }
 
-func makeCache() {
+func publishEventToSubscribers() {
 	// simulating long process between 300 - 500ms
 	time.Sleep(time.Millisecond * time.Duration(rand.Intn(500-300)+300))
 }
@@ -83,7 +83,7 @@ func LogAccess() http.HandlerFunc {
 			return
 		}
 
-		wrapSpan("Database", func(sp opentracing.Span) {
+		wrapSpan("writeToDB", func(sp opentracing.Span) {
 			sp.Log(opentracing.LogData{
 				Event: "Save to Database",
 				Payload: map[string]interface{}{
@@ -93,14 +93,14 @@ func LogAccess() http.HandlerFunc {
 			writeToDB("something to write")
 		}, span.Context())
 
-		wrapSpan("Cache", func(sp opentracing.Span) {
+		wrapSpan("publishEventToSubscribers", func(sp opentracing.Span) {
 			sp.Log(opentracing.LogData{
 				Event: "Make a Cache",
 				Payload: map[string]interface{}{
 					"cacheID": "xyz",
 				},
 			})
-			makeCache()
+			publishEventToSubscribers()
 		}, span.Context())
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
