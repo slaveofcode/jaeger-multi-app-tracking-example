@@ -1,6 +1,7 @@
 const router = require('express').Router()
 const opentracing = require('opentracing')
 const axios = require('axios')
+const { types } = require('util')
 
 const tracer = opentracing.globalTracer()
 
@@ -36,12 +37,42 @@ const wrapSpan = (funcArg, parentSpan) => {
 
     const execFunc = funcArg({ httpClient, rootSpan: span })    
 
-    span.finish()
+    return (...args) => {
+        // Node 10.x or later
+        const isAsyncFunc = types.isAsyncFunction(execFunc)
+        if (isAsyncFunc) {
+            return execFunc(...args)
+                .then(res => {
+                    span.finish()
+                    return res
+                }).catch(err => {
+                    span.addTags(opentracing.Tags.ERROR, err.message)
+                    span.addTags(opentracing.Tags.SAMPLING_PRIORITY, 1)
+                    span.finish()
+                    throw err
+                }) 
+        } 
 
-    return execFunc
+        const res = execFunc(...args)
+
+        if (res instanceof Promise) {
+            return res
+                .then(res => {
+                    span.finish()
+                    return res
+                })
+                .catch(err => {
+                    span.addTags(opentracing.Tags.ERROR, err.message)
+                    span.addTags(opentracing.Tags.SAMPLING_PRIORITY, 1)
+                    span.finish()
+                })
+        }
+        
+        return res
+    }
 }
 
-const getBankAccount = ({ httpClient, rootSpan }) => userId => {
+const getBankAccount = ({ httpClient, rootSpan }) => async userId => {
     wrapSpan(logAccess, rootSpan)({ action: 'RequestUserBankAccount' })
         .catch(err => {})
     return httpClient.get(`http://localhost:8111/api/bank-accounts/${userId}`)
@@ -109,12 +140,15 @@ const wrapExtension = (funcArg) => {
 }
 
 router.get('/:id', async (req, res) => {
-    const span = tracer.startSpan('detail-user', { childOf: req.tracer.span })
+    const span = tracer.startSpan('detail-user', { childOf: req.tracer.span.context() })
 
     span.log({
         event: 'fetch',
         message: 'getting detail user'
     })
+
+    wrapSpan(logAccess, span)({ action: 'AccessDetailUser' }).catch(err => {})
+
     const user = users.find(u => u.id === Number(req.params.id))
 
     if (user) {
@@ -134,7 +168,7 @@ router.get('/:id', async (req, res) => {
 })
 
 router.get('/', async (req, res) => {
-    const span = tracer.startSpan('list-user', { childOf: req.tracer.span })
+    const span = tracer.startSpan('list-user', { childOf: req.tracer.span.context() })
     span.log({
         event: 'fetch',
         message: 'getting all users'

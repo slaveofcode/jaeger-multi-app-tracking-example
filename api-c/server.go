@@ -57,15 +57,15 @@ func newRouter() *mux.Router {
 
 	apiRouter := router.PathPrefix("/api").Subrouter()
 
-	router.
-		Path("/ping").
-		Methods("POST", "GET").
-		Handler(pinger.Ping())
-
 	apiRouter.
 		Path("/service/log-access").
 		Methods("POST").
 		Handler(service.LogAccess())
+
+	router.
+		Path("/ping").
+		Methods("GET").
+		Handler(pinger.Ping())
 
 	return router
 }
@@ -93,12 +93,18 @@ func main() {
 	handlers := c.Handler(newRouter())
 
 	exit := make(chan os.Signal)
+	shutdown := make(chan bool)
 	signal.Notify(exit, syscall.SIGINT, syscall.SIGTERM)
 
-	log.Println("Server will started at :8112")
-	http.ListenAndServe(":8112", handlers)
+	go func() {
+		<-exit
+		shutdown <- true
+	}()
 
-	<-exit
+	log.Println("Server will started at :8112")
+	go http.ListenAndServe(":8112", handlers)
+
+	<-shutdown
 	closerFunc()
 	os.Exit(1)
 }

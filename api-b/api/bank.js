@@ -23,7 +23,9 @@ const bankAccounts = [
 ]
 
 router.get('/:id', (req, res) => {
-    const span = tracer.startSpan('detail-bank-account', { childOf: req.tracer.span })
+    const span = tracer.startSpan('detail-bank-account', {
+        childOf: req.tracer.span.context(),
+    })
     logging('detail-bank-account', span)
         .catch(err => {})
     
@@ -41,7 +43,9 @@ router.get('/:id', (req, res) => {
 })
 
 router.get('/', (req, res) => {
-    const span = tracer.startSpan('list-bank-accounts', { childOf: req.tracer.span })
+    const span = tracer.startSpan('list-bank-accounts', {
+        childOf: req.tracer.span.context(),
+    })
     logging('list-bank-account', span)
         .catch(err => {})
 

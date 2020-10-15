@@ -2,11 +2,14 @@ package service
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"time"
 
 	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 )
 
 type LogInfo struct {
@@ -16,38 +19,56 @@ type LogInfo struct {
 	TimeRequested   time.Time `json:"timeRequested"`
 }
 
-func wrapSpan(operation string, f func(), ctx opentracing.SpanContext) {
+func wrapSpan(operation string, f func(span opentracing.Span), ctx opentracing.SpanContext) {
 	s := opentracing.StartSpan(operation, opentracing.ChildOf(ctx))
 	defer s.Finish()
 
 	// run the function
-	f()
+	f(s)
 }
 
 func writeToDB(data string) {
-	// simulating long process
-	time.Sleep(time.Second * 3)
+	// simulating long process between 100 - 5000ms
+	time.Sleep(time.Millisecond * time.Duration(rand.Intn(5000-100)+100))
 }
 
 func makeCache() {
-	// simulating long process
-	time.Sleep(time.Second * 1)
+	// simulating long process between 300 - 500ms
+	time.Sleep(time.Millisecond * time.Duration(rand.Intn(500-300)+300))
 }
 
 func LogAccess() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		wireContext, err := opentracing.GlobalTracer().Extract(
+		tracer := opentracing.GlobalTracer()
+		spanCtx, err := tracer.Extract(
 			opentracing.HTTPHeaders,
-			opentracing.HTTPHeadersCarrier(r.Header))
+			opentracing.HTTPHeadersCarrier(r.Header),
+		)
+
+		clientHeaders := make(map[string]interface{})
+
+		for key, vals := range r.Header {
+
+			var headerValues string
+			for _, val := range vals {
+				headerValues += " " + val
+			}
+
+			clientHeaders[key] = headerValues
+		}
+
+		fmt.Println(clientHeaders)
+
 		var span opentracing.Span
 		if err != nil {
 			log.Println("Error while getting previous context", err.Error())
 			span = opentracing.StartSpan(
-				"Pinger",
-				opentracing.ChildOf(wireContext))
+				"LogAccess",
+			)
 		} else {
 			span = opentracing.StartSpan(
-				"Pinger",
+				"LogAccess",
+				ext.RPCServerOption(spanCtx),
 			)
 		}
 
@@ -62,11 +83,23 @@ func LogAccess() http.HandlerFunc {
 			return
 		}
 
-		wrapSpan("Database", func() {
+		wrapSpan("Database", func(sp opentracing.Span) {
+			sp.Log(opentracing.LogData{
+				Event: "Save to Database",
+				Payload: map[string]interface{}{
+					"example": "data 123",
+				},
+			})
 			writeToDB("something to write")
 		}, span.Context())
 
-		wrapSpan("Cache", func() {
+		wrapSpan("Cache", func(sp opentracing.Span) {
+			sp.Log(opentracing.LogData{
+				Event: "Make a Cache",
+				Payload: map[string]interface{}{
+					"cacheID": "xyz",
+				},
+			})
 			makeCache()
 		}, span.Context())
 
