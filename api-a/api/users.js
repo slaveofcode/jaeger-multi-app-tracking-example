@@ -147,7 +147,7 @@ router.get('/:id', async (req, res) => {
         message: 'getting detail user'
     })
 
-    wrapSpan(logAccess, span)({ action: 'AccessDetailUser' }).catch(err => {})
+    await wrapSpan(logAccess, span)({ action: 'AccessDetailUser' })
 
     const user = users.find(u => u.id === Number(req.params.id))
 
@@ -162,7 +162,7 @@ router.get('/:id', async (req, res) => {
         user.point = userPointData
     }
 
-    // span.finish() 
+    span.finish()
 
     return res.json(user)
 })
@@ -184,6 +184,8 @@ router.get('/', async (req, res) => {
     }
 
     const userInfos = await Promise.all(userInfosReqs)
+
+    span.finish()
     
     return res.json(userInfos)
 })

@@ -38,6 +38,8 @@ router.get('/:id', (req, res) => {
     if (acc) {
         span.setBaggageItem("user_id", acc.userId)
     }
+
+    span.finish()
     
     return res.json(acc)
 })
@@ -53,6 +55,9 @@ router.get('/', (req, res) => {
         event: 'format',
         message: 'getting all accounts'
     })
+    
+    span.finish()
+
     return res.json(bankAccounts)
 })
 
