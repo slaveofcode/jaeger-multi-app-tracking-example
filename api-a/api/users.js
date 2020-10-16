@@ -2,6 +2,19 @@ const router = require('express').Router()
 const opentracing = require('opentracing')
 const axios = require('axios')
 const { types } = require('util')
+const nats = require('nats')
+
+const nc = nats.connect({
+    servers: [
+        'nats://0.0.0.0:4222',
+        'nats://0.0.0.0:5222',
+        'nats://0.0.0.0:6222',
+    ]
+})
+
+nc.on('connect', () => {
+    console.log('Connected to ' + nc.currentServer.url.host)
+})
 
 const tracer = opentracing.globalTracer()
 
@@ -140,6 +153,9 @@ const wrapExtension = (funcArg) => {
 }
 
 router.get('/:id', async (req, res) => {
+    console.log('traceID:', req.tracer.span._spanContext._traceIdStr)
+    nc.publish('order-trace-id', req.tracer.span._spanContext._traceIdStr)
+    // 
     const span = tracer.startSpan('detail-user', { childOf: req.tracer.span.context() })
 
     span.log({
