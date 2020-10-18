@@ -1,4 +1,4 @@
-# Jaeger Multi App Tracking Example
+# Jaeger Multi App Tracking Example 📊 
 Example implementation of multi application tracking with jaeger tracing.
 
 This project has 3 different applications, 
