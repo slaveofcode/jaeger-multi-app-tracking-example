@@ -10,11 +10,13 @@ This project has 3 different applications,
 In operation, the **Service A** is depends on **Service B** and **C**, mimicking microservices architecture, so then you'll get the idea about how opentracing works in practice using Jaeger as a backend.
 
 ### How to Start
-
-1. Clone this repostory `git clone --depth=1 git@github.com:slaveofcode/jaeger-multi-app-tracking-example.git`
-2. Start the Jaeger `jaeger-all-in-one` service, you can use the *binary* or using its **Docker** image as [described here](https://www.jaegertracing.io/docs/1.18/getting-started/) 
-3. Start making some requests by hitting [http://localhost:8110/api/users](http://localhost:8110/api/users) and [http://localhost:8110/api/users/1](http://localhost:8110/api/users/1)
-4. Visit Jaeger UI to see some trace
+1. Make sure your environment already setup for NodeJs and Go (with go module support)
+2. Clone this repostory `git clone --depth=1 git@github.com:slaveofcode/jaeger-multi-app-tracking-example.git`
+3. Start **Service A** by go to `api-a` directory and run command `npm start`, the same steps applied to **Service B** on `api-b`
+4. Start **Service C** by go to `api-c` directory and run command `go run server.go`
+5. Start the Jaeger `jaeger-all-in-one` service, you can use the *binary* or using its **Docker** image as [described here](https://www.jaegertracing.io/docs/1.18/getting-started/) 
+6. Start making some requests by hitting [http://localhost:8110/api/users](http://localhost:8110/api/users) and [http://localhost:8110/api/users/1](http://localhost:8110/api/users/1)
+7. Visit **Jaeger UI** at [http://localhost:16686](http://localhost:16686) and select **Service A** on the Filter Search box to see some traces.
 
 ### LICENSE
 
