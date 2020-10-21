@@ -2,6 +2,21 @@ const router = require('express').Router()
 const opentracing = require('opentracing')
 const axios = require('axios')
 const { types } = require('util')
+const nsq = require('nsqjs')
+
+const w = new nsq.Writer('127.0.0.1', 4150)
+
+w.connect()
+
+w.on('ready', () => {
+    console.log('NSQ connected')
+})
+
+w.on('closed', () => {
+  console.log('NSQ closed')
+})
+
+
 
 const tracer = opentracing.globalTracer()
 
@@ -140,6 +155,13 @@ const wrapExtension = (funcArg) => {
 }
 
 router.get('/:id', async (req, res) => {
+    const traceId = req.tracer.span._spanContext._traceIdStr
+
+    w.publish('OPENTRACING_INSPECTOR', {
+        traceId,
+        traceType: "ORDER",
+    })
+
     const span = tracer.startSpan('detail-user', { childOf: req.tracer.span.context() })
 
     span.log({
