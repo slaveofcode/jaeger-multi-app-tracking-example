@@ -10,6 +10,7 @@ This project has 3 different applications,
 In operation, the **Service A** is depends on **Service B** and **C**, mimicking microservices architecture, so then you'll get the idea about how opentracing works in practice using Jaeger as a backend.
 
 ### How to Start
+1. Download & run `jaeger-all-in-one` binary to start jaeger services (agent, collector, query and badger as in memory db)
 1. Make sure your environment already setup for NodeJs and Go (with go module support)
 2. Clone this repostory `git clone --depth=1 git@github.com:slaveofcode/jaeger-multi-app-tracking-example.git`
 3. Start **Service A** by go to `api-a` directory and run command `npm start`, the same steps applied to **Service B** on `api-b`
